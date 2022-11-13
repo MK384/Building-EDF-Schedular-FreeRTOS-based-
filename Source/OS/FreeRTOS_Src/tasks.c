@@ -930,7 +930,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
 						/*E.C. : insert the period value in the generic list iteam before to add the task in RL: */
 						listSET_LIST_ITEM_VALUE( &( ( pxNewTCB )->xStateListItem ), (pxNewTCB)->xTaskPeriod + xTickCount);
 
-						prvAddTaskToReadyList( pxNewTCB );
+						prvAddNewTaskToReadyList( pxNewTCB );
 
             xReturn = pdPASS;
         }
@@ -940,14 +940,6 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB ) PRIVILEGED_FUNCTION;
         }
 
         return xReturn;
-			
-
-
-
-
-
-
-
 
 		}
 
@@ -1233,15 +1225,28 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
         }
         else
         {
-            /* If the scheduler is not already running, make this task the
-             * current task if it is the highest priority task to be created
-             * so far. */
+							
             if( xSchedulerRunning == pdFALSE )
             {
+							
+						#if (configUSE_EDF_SCHEDULER ==	0)
+						/* If the scheduler is not already running, make this task the
+             * current task if it is the highest priority task to be created
+             * so far. */
                 if( pxCurrentTCB->uxPriority <= pxNewTCB->uxPriority )
                 {
                     pxCurrentTCB = pxNewTCB;
                 }
+						#else
+					  /* If the scheduler is not already running, make this task the
+             * current task if it has the nearest deadline so far. */
+								if( listGET_LIST_ITEM_VALUE( &( pxNewTCB->xStateListItem ) ) <= listGET_LIST_ITEM_VALUE( &( pxCurrentTCB->xStateListItem ) ) )
+                {
+                    pxCurrentTCB = pxNewTCB;
+                }
+
+						#endif
+								
                 else
                 {
                     mtCOVERAGE_TEST_MARKER();
@@ -1250,7 +1255,7 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
             else
             {
                 mtCOVERAGE_TEST_MARKER();
-            }
+            }			
         }
 
         uxTaskNumber++;
@@ -1271,12 +1276,24 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
 
     if( xSchedulerRunning != pdFALSE )
     {
+			
+			#if (configUSE_EDF_SCHEDULER ==	0)
         /* If the created task is of a higher priority than the current task
          * then it should run now. */
         if( pxCurrentTCB->uxPriority < pxNewTCB->uxPriority )
         {
             taskYIELD_IF_USING_PREEMPTION();
         }
+			#else
+				/* If the created task is of lower deadline than the current task
+         * then it should run now. */
+        if( listGET_LIST_ITEM_VALUE( &( pxNewTCB->xStateListItem ) ) <= listGET_LIST_ITEM_VALUE( &( pxCurrentTCB->xStateListItem ) ) )
+        {
+            taskYIELD_IF_USING_PREEMPTION();
+        }
+
+
+			#endif
         else
         {
             mtCOVERAGE_TEST_MARKER();
@@ -2162,8 +2179,11 @@ void vTaskStartScheduler( void )
                 xReturn = pdFAIL;
             }
         }
-    #elseif  (configUSE_EDF_SCHEDULER == 1)
-        {
+    #else  
+				{
+					
+					#if (configUSE_EDF_SCHEDULER == 1)
+					{
             /* The Idle task is being created with the farest deadline. */
 						TickType_t initIDLEPeriod = Idle_Period;
 					
@@ -2173,8 +2193,9 @@ void vTaskStartScheduler( void )
                                    ( void * ) NULL,
                                    portPRIVILEGE_BIT,  /* In effect ( tskIDLE_PRIORITY | portPRIVILEGE_BIT ), but tskIDLE_PRIORITY is zero. */
                                    &xIdleTaskHandle, initIDLEPeriod ); /*lint !e961 MISRA exception, justified as it is not a redundant explicit cast to all supported compilers. */
-        }
-		#else 
+					}
+					#else
+					{
 				       /* The Idle task is being created using dynamically allocated RAM. */
             xReturn = xTaskCreate( prvIdleTask,
                                    configIDLE_TASK_NAME,
@@ -2183,8 +2204,10 @@ void vTaskStartScheduler( void )
                                    portPRIVILEGE_BIT,  /* In effect ( tskIDLE_PRIORITY | portPRIVILEGE_BIT ), but tskIDLE_PRIORITY is zero. */
                                    &xIdleTaskHandle ); /*lint !e961 MISRA exception, justified as it is not a redundant explicit cast to all supported compilers. */
 
-
-
+				  }
+					#endif
+																	 
+				}													 
     #endif /* configSUPPORT_STATIC_ALLOCATION */
 
     #if ( configUSE_TIMERS == 1 )
@@ -3669,7 +3692,7 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
                     mtCOVERAGE_TEST_MARKER();
                 }
             }
-				#elseif (configUSE_EDF_SCHEDULER == 1)
+				#else
 
 								listSET_LIST_ITEM_VALUE( &( ( pxCurrentTCB )->xStateListItem ), ( pxCurrentTCB)->xTaskPeriod +xTickCount);
 								taskYIELD();
@@ -4143,6 +4166,7 @@ static void prvCheckTasksWaitingTermination( void )
 
     static void prvDeleteTCB( TCB_t * pxTCB )
     {
+			
         /* This call is required specifically for the TriCore port.  It must be
          * above the vPortFree() calls.  The call is also used by ports/demos that
          * want to allocate and clean RAM statically. */
