@@ -85,7 +85,7 @@ static void prvSetupHardware(void);
 								System Tasks Requirments
 \-----------------------------------------------------------------*/
 
-const size_t xMessageBufferSizeBytes = 25;
+const size_t xMessageBufferSizeBytes = 100;
 
 MessageBufferHandle_t xMessageBuffer1, xMessageBuffer2, xMessageBuffer3;
 
@@ -99,7 +99,9 @@ void Button_1_Monitor(void *pvParameters)
 	const TickType_t xFrequency = 50;
 	BaseType_t xWasDelayed;
 
-	char *pvTxData;
+	char pvTxRiseEdge[] = "Rising Edge on Buton 1\n";
+	char pvTxFallEdge[] = "Falling Edge on Buton 1\n";
+
 	pinState_t B1_state = PIN_IS_LOW;
 
 	// SET TASK TAG FOR RACING PURPOSE
@@ -123,18 +125,18 @@ void Button_1_Monitor(void *pvParameters)
 
 			if (B1_state == PIN_IS_HIGH)
 			{
-				pvTxData = "Rising Edge on Buton 1";
+
 				xMessageBufferSend(xMessageBuffer1,
-								   (void *)pvTxData,
-								   xMessageBufferSizeBytes,
+								   (void *)pvTxRiseEdge,
+								   sizeof(pvTxRiseEdge),
 								   (TickType_t)0);
 			}
 			else
 			{
-				pvTxData = "Falling Edge on Buton 1";
+
 				xMessageBufferSend(xMessageBuffer1,
-								   (void *)pvTxData,
-								   xMessageBufferSizeBytes,
+								   (void *)pvTxFallEdge,
+								   sizeof(pvTxFallEdge),
 								   (TickType_t)0);
 			}
 		}
@@ -149,7 +151,8 @@ void Button_2_Monitor(void *pvParameters)
 	const TickType_t xFrequency = 50;
 	BaseType_t xWasDelayed;
 
-	char *pvTxData;
+	char pvTxRiseEdge[] = "Rising Edge on Buton 2\n";
+	char pvTxFallEdge[] = "Falling Edge on Buton 2\n";
 	pinState_t B2_state = PIN_IS_LOW;
 
 	// SET TASK TAG FOR RACING PURPOSE
@@ -166,25 +169,25 @@ void Button_2_Monitor(void *pvParameters)
 	{
 		/* Task code goes here. */
 
-		if (GPIO_read(PORT_0, PIN1) != B2_state)
+		if (GPIO_read(PORT_0, PIN6) != B2_state)
 
 		{
-			B2_state = GPIO_read(PORT_0, PIN1);
+			B2_state = GPIO_read(PORT_0, PIN6);
 
 			if (B2_state == PIN_IS_HIGH)
 			{
-				pvTxData = "Rising Edge on Buton 2";
+
 				xMessageBufferSend(xMessageBuffer2,
-								   (void *)pvTxData,
-								   xMessageBufferSizeBytes,
+								   (void *)pvTxRiseEdge,
+								   sizeof(pvTxRiseEdge),
 								   (TickType_t)0);
 			}
 			else
 			{
-				pvTxData = "Falling Edge on Buton 2";
+
 				xMessageBufferSend(xMessageBuffer2,
-								   (void *)pvTxData,
-								   xMessageBufferSizeBytes,
+								   (void *)pvTxFallEdge,
+								   sizeof(pvTxFallEdge),
 								   (TickType_t)0);
 			}
 		}
@@ -200,7 +203,7 @@ void Periodic_Transmitter(void *pvParameters)
 	const TickType_t xFrequency = 100;
 	BaseType_t xWasDelayed;
 
-	char *pvTxData;
+	char pvTxData[] = "This is 100 ms Periodic String\n";
 
 	// SET TASK TAG FOR RACING PURPOSE
 	vTaskSetApplicationTaskTag(NULL, (TaskHookFunction_t)3);
@@ -218,10 +221,9 @@ void Periodic_Transmitter(void *pvParameters)
 	{
 		/* Task code goes here. */
 
-		pvTxData = "This is Periodic String";
 		xMessageBufferSend(xMessageBuffer3,
 						   (void *)pvTxData,
-						   xMessageBufferSizeBytes,
+						   sizeof(pvTxData),
 						   (TickType_t)0);
 
 		xWasDelayed = xTaskDelayUntil(&xLastWakeTime, xFrequency);
@@ -332,6 +334,7 @@ void Load_2_Simulation(void *pvParameters)
 		{
 			__asm("NOP");
 		}
+
 		xWasDelayed = xTaskDelayUntil(&xLastWakeTime, xFrequency);
 	}
 }
@@ -364,8 +367,48 @@ TaskHandle_t xTsk_6_Handler = NULL;
  */
 int main(void)
 {
+
+	char px[] = "Program Started\n";
 	/* Setup the hardware for use with the Keil demo board. */
 	prvSetupHardware();
+
+	vSerialPutString((const signed char *)px, sizeof(px));
+
+	xTaskPeriodicCreate(
+		Button_1_Monitor,	/* Function that implements the task. */
+		"BUTTON_1_MONITOR", /* Text name for the task. */
+		96,					/* Stack size in words, not bytes. */
+		(void *)1,			/* Parameter passed into the task. */
+		1,					/* Priority at which the task is created. */
+		&xTsk_1_Handler,	/* Used to pass out the created task's handle. */
+		xTsk_B1_period);	/* Task period to calculate task deadline*/
+
+	xTaskPeriodicCreate(
+		Button_2_Monitor,	/* Function that implements the task. */
+		"BUTTON_2_MONITOR", /* Text name for the task. */
+		96,					/* Stack size in words, not bytes. */
+		(void *)1,			/* Parameter passed into the task. */
+		1,					/* Priority at which the task is created. */
+		&xTsk_2_Handler,	/* Used to pass out the created task's handle. */
+		xTsk_B2_period);	/* Task period to calculate task deadline*/
+
+	xTaskPeriodicCreate(
+		Periodic_Transmitter, /* Function that implements the task. */
+		"Transmitter",		  /* Text name for the task. */
+		96,					  /* Stack size in words, not bytes. */
+		(void *)1,			  /* Parameter passed into the task. */
+		1,					  /* Priority at which the task is created. */
+		&xTsk_3_Handler,	  /* Used to pass out the created task's handle. */
+		xTsk_Tx_period);	  /* Task period to calculate task deadline*/
+
+	xTaskPeriodicCreate(
+		Uart_Receiver,	   /* Function that implements the task. */
+		"UART",			   /* Text name for the task. */
+		96,				   /* Stack size in words, not bytes. */
+		(void *)1,		   /* Parameter passed into the task. */
+		1,				   /* Priority at which the task is created. */
+		&xTsk_4_Handler,   /* Used to pass out the created task's handle. */
+		xTsk_UART_period); /* Task period to calculate task deadline*/
 
 	xTaskPeriodicCreate(
 		Load_1_Simulation,	/* Function that implements the task. */
@@ -375,6 +418,15 @@ int main(void)
 		1,					/* Priority at which the task is created. */
 		&xTsk_5_Handler,	/* Used to pass out the created task's handle. */
 		xTsk_Load1_period); /* Task period to calculate task deadline*/
+
+	xTaskPeriodicCreate(
+		Load_2_Simulation,	/* Function that implements the task. */
+		"LOAD_1",			/* Text name for the task. */
+		96,					/* Stack size in words, not bytes. */
+		(void *)1,			/* Parameter passed into the task. */
+		1,					/* Priority at which the task is created. */
+		&xTsk_6_Handler,	/* Used to pass out the created task's handle. */
+		xTsk_Load2_period); /* Task period to calculate task deadline*/
 
 	/* Now all the tasks have been started - start the scheduler.
 
@@ -400,7 +452,7 @@ void timer1Reset(void)
 }
 
 /* Function to initialize and start timer 1 */
-static void configTimer1(void)
+void configTimer1(void)
 {
 	T1PR = 1000;
 	T1TCR |= 0x1;

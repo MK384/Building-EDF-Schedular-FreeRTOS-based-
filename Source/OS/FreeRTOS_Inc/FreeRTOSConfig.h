@@ -59,6 +59,8 @@
 #define configIDLE_SHOULD_YIELD 1
 #define configUSE_MUTEXES 1
 #define configUSE_APPLICATION_TASK_TAG 1
+#define configGENERATE_RUN_TIME_STATS 1
+#define configUSE_STATS_FORMATTING_FUNCTIONS 1
 
 #define Idle_Period ((unsigned long)10000)
 
@@ -114,5 +116,8 @@ to exclude the API function. */
         GPIO_write(PORT_1, PIN5, PIN_IS_HIGH); \
     if ((int)pxCurrentTCB->pxTaskTag == 6)     \
         GPIO_write(PORT_1, PIN6, PIN_IS_HIGH);
+
+#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()
+#define portGET_RUN_TIME_COUNTER_VALUE() (T1TC)
 
 #endif /* FREERTOS_CONFIG_H */
