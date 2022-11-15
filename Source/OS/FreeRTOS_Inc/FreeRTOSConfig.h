@@ -86,36 +86,36 @@ to exclude the API function. */
 \************************************************************/
 
 #define traceTASK_INCREMENT_TICK(xTickCount) \
-    GPIO_write(PORT_1, PIN0, PIN_IS_HIGH);   \
-    GPIO_write(PORT_1, PIN0, PIN_IS_LOW);
-
-#define traceTASK_SWITCHED_OUT()              \
-    if ((int)pxCurrentTCB->pxTaskTag == 1)    \
-        GPIO_write(PORT_1, PIN1, PIN_IS_LOW); \
-    if ((int)pxCurrentTCB->pxTaskTag == 2)    \
-        GPIO_write(PORT_1, PIN2, PIN_IS_LOW); \
-    if ((int)pxCurrentTCB->pxTaskTag == 3)    \
-        GPIO_write(PORT_1, PIN3, PIN_IS_LOW); \
-    if ((int)pxCurrentTCB->pxTaskTag == 4)    \
-        GPIO_write(PORT_1, PIN4, PIN_IS_LOW); \
-    if ((int)pxCurrentTCB->pxTaskTag == 5)    \
-        GPIO_write(PORT_1, PIN5, PIN_IS_LOW); \
-    if ((int)pxCurrentTCB->pxTaskTag == 6)    \
-        GPIO_write(PORT_1, PIN6, PIN_IS_LOW);
+    GPIO_write(PORT_0, PIN0, PIN_IS_HIGH);   \
+    GPIO_write(PORT_0, PIN0, PIN_IS_LOW);
 
 #define traceTASK_SWITCHED_IN()                \
     if ((int)pxCurrentTCB->pxTaskTag == 1)     \
-        GPIO_write(PORT_1, PIN1, PIN_IS_HIGH); \
+        GPIO_write(PORT_0, PIN1, PIN_IS_HIGH); \
     if ((int)pxCurrentTCB->pxTaskTag == 2)     \
-        GPIO_write(PORT_1, PIN2, PIN_IS_HIGH); \
+        GPIO_write(PORT_0, PIN2, PIN_IS_HIGH); \
     if ((int)pxCurrentTCB->pxTaskTag == 3)     \
-        GPIO_write(PORT_1, PIN3, PIN_IS_HIGH); \
+        GPIO_write(PORT_0, PIN3, PIN_IS_HIGH); \
     if ((int)pxCurrentTCB->pxTaskTag == 4)     \
-        GPIO_write(PORT_1, PIN4, PIN_IS_HIGH); \
+        GPIO_write(PORT_0, PIN4, PIN_IS_HIGH); \
     if ((int)pxCurrentTCB->pxTaskTag == 5)     \
-        GPIO_write(PORT_1, PIN5, PIN_IS_HIGH); \
+        GPIO_write(PORT_0, PIN5, PIN_IS_HIGH); \
     if ((int)pxCurrentTCB->pxTaskTag == 6)     \
-        GPIO_write(PORT_1, PIN6, PIN_IS_HIGH);
+        GPIO_write(PORT_0, PIN6, PIN_IS_HIGH);
+
+#define traceTASK_SWITCHED_OUT()              \
+    if ((int)pxCurrentTCB->pxTaskTag == 1)    \
+        GPIO_write(PORT_0, PIN1, PIN_IS_LOW); \
+    if ((int)pxCurrentTCB->pxTaskTag == 2)    \
+        GPIO_write(PORT_0, PIN2, PIN_IS_LOW); \
+    if ((int)pxCurrentTCB->pxTaskTag == 3)    \
+        GPIO_write(PORT_0, PIN3, PIN_IS_LOW); \
+    if ((int)pxCurrentTCB->pxTaskTag == 4)    \
+        GPIO_write(PORT_0, PIN4, PIN_IS_LOW); \
+    if ((int)pxCurrentTCB->pxTaskTag == 5)    \
+        GPIO_write(PORT_0, PIN5, PIN_IS_LOW); \
+    if ((int)pxCurrentTCB->pxTaskTag == 6)    \
+        GPIO_write(PORT_0, PIN6, PIN_IS_LOW);
 
 #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()
 #define portGET_RUN_TIME_COUNTER_VALUE() (T1TC)
